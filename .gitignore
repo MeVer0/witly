@@ -1,0 +1,18 @@
+# Python pre-compiled files
+*.pyc
+*.log
+*.csv
+*.xlsx
+
+# Env exclude
+venv/*
+venv*
+.venv/*
+.python-version
+
+# PyCharm
+.idea/
+# !.idea/dictionaries/*
+
+# Other
+.env
