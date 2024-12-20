@@ -15,18 +15,40 @@ env:
 
 jobs:
   sync:
-    runs-on: self-hosted
+    runs-on: self-hosted  # Используется self-hosted runner
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
 
+      - name: Set environment variables
+        run: |
+          if [[ "${{ github.ref }}" == "refs/heads/dev" ]]; then
+            echo "ENV_FILE=${{ secrets.DEV_ENV_FILE }}" >> $GITHUB_ENV
+            echo "PRIVATE_KEY=${{ secrets.DEV_PRIVATE_KEY }}" >> $GITHUB_ENV
+            echo "USER_NAME=${{ secrets.DEV_BACK_USER_NAME }}" >> $GITHUB_ENV
+            echo "SERVER_URL=${{ secrets.DEV_SERVER_URL }}" >> $GITHUB_ENV
+            echo "SERVER_PORT=${{ secrets.DEV_SERVER_PORT }}" >> $GITHUB_ENV
+            echo "BASE_DIR=${{ secrets.DEV_BASE_DIR }}" >> $GITHUB_ENV
+          elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "ENV_FILE=${{ secrets.MAIN_ENV_FILE }}" >> $GITHUB_ENV
+            echo "PRIVATE_KEY=${{ secrets.MAIN_PRIVATE_KEY }}" >> $GITHUB_ENV
+            echo "USER_NAME=${{ secrets.MAIN_BACK_USER_NAME }}" >> $GITHUB_ENV
+            echo "SERVER_URL=${{ secrets.MAIN_SERVER_URL }}" >> $GITHUB_ENV
+            echo "SERVER_PORT=${{ secrets.MAIN_SERVER_PORT }}" >> $GITHUB_ENV
+            echo "BASE_DIR=${{ secrets.MAIN_BASE_DIR }}" >> $GITHUB_ENV
+          else
+            echo "Unknown branch: ${{ github.ref }}"
+            exit 1
+          fi
+
       - name: Set up SSH
         run: |
+          eval $(ssh-agent -s)  # Запускаем SSH-агент
           mkdir -p ~/.ssh
-          echo "${{ secrets.PRIVATE_KEY }}" | base64 -d | tr -d '\r' | ssh-add - > /dev/null
+          echo "${PRIVATE_KEY}" | base64 -d | tr -d '\r' | ssh-add - > /dev/null
           echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config
-
+          
       - name: Install dependencies
         run: |
           sudo apt-get update
@@ -34,15 +56,15 @@ jobs:
 
       - name: Sync repo to host
         run: |
-          cat "${{ secrets.ENV_FILE }}" > .env
+          cat "${ENV_FILE}" > .env
           echo "CI_COMMIT_BRANCH=${GITHUB_REF##*/}" >> .env
-          ssh -A -o StrictHostKeyChecking=no ${{ secrets.USER_NAME }}@${{ secrets.SERVER_URL }} -p ${{ secrets.SERVER_PORT }} "mkdir -p ${{ secrets.BASE_DIR }}"
-          ssh -A -o StrictHostKeyChecking=no ${{ secrets.USER_NAME }}@${{ secrets.SERVER_URL }} -p ${{ secrets.SERVER_PORT }} "sudo apt-get update && sudo apt-get install rsync"
-          rsync -zvrRth --progress --no-inc-recursive --exclude '.git' . ${{ secrets.USER_NAME }}@${{ secrets.SERVER_URL }}:${{ secrets.BASE_DIR }}
+          ssh -A -o StrictHostKeyChecking=no $USER_NAME@$SERVER_URL -p $SERVER_PORT "mkdir -p $BASE_DIR"
+          ssh -A -o StrictHostKeyChecking=no $USER_NAME@$SERVER_URL -p $SERVER_PORT "sudo apt-get update && sudo apt-get install rsync"
+          rsync -zvrRth --progress --no-inc-recursive --exclude '.git' . $USER_NAME@$SERVER_URL:$BASE_DIR
 
   deploy:
-    runs-on: self-hosted
-    needs: sync
+    runs-on: self-hosted  # Используется self-hosted runner
+    needs: sync  # Деплой зависит от синхронизации
 
     steps:
       - name: Checkout repository
@@ -50,12 +72,12 @@ jobs:
 
       - name: Launch containers
         run: |
-          ssh -A -o StrictHostKeyChecking=no ${{ secrets.USER_NAME }}@${{ secrets.SERVER_URL }} -p ${{ secrets.SERVER_PORT }} "cd ${{ secrets.BASE_DIR }}/ && docker compose --env-file .env up --build -d"
-
+          ssh -A -o StrictHostKeyChecking=no $USER_NAME@$SERVER_URL -p $SERVER_PORT "cd $BASE_DIR/ && docker compose --env-file .env up --build -d"
+        
       - name: Docker system prune
         run: |
           if [ -z "${{ secrets.NOT_PRUNE_DOCKER }}" ]; then
-            ssh -A -o StrictHostKeyChecking=no ${{ secrets.USER_NAME }}@${{ secrets.SERVER_URL }} -p ${{ secrets.SERVER_PORT }} "docker system prune --all --force"
+            ssh -A -o StrictHostKeyChecking=no $USER_NAME@$SERVER_URL -p $SERVER_PORT "docker system prune --all --force"
           else
             echo "Skip docker system prune"
           fi
