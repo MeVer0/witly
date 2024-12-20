@@ -24,14 +24,14 @@ jobs:
 
       - name: Set environment variables
         run: |
-          if [[ "${{ github.ref }}" == "refs/heads/dev" ]]; then
+          if [[ "${GITHUB_REF}" == "refs/heads/dev" ]]; then
             echo "ENV_FILE=${{ secrets.DEV_ENV_FILE }}" >> $GITHUB_ENV
             echo "PRIVATE_KEY=${{ secrets.DEV_PRIVATE_KEY }}" >> $GITHUB_ENV
             echo "USER_NAME=${{ secrets.DEV_BACK_USER_NAME }}" >> $GITHUB_ENV
             echo "SERVER_URL=${{ secrets.DEV_SERVER_URL }}" >> $GITHUB_ENV
             echo "SERVER_PORT=${{ secrets.DEV_SERVER_PORT }}" >> $GITHUB_ENV
             echo "BASE_DIR=${{ secrets.DEV_BASE_DIR }}" >> $GITHUB_ENV
-          elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+          elif [[ "${GITHUB_REF}" == "refs/heads/main" ]]; then
             echo "ENV_FILE=${{ secrets.MAIN_ENV_FILE }}" >> $GITHUB_ENV
             echo "PRIVATE_KEY=${{ secrets.MAIN_PRIVATE_KEY }}" >> $GITHUB_ENV
             echo "USER_NAME=${{ secrets.MAIN_BACK_USER_NAME }}" >> $GITHUB_ENV
@@ -39,19 +39,17 @@ jobs:
             echo "SERVER_PORT=${{ secrets.MAIN_SERVER_PORT }}" >> $GITHUB_ENV
             echo "BASE_DIR=${{ secrets.MAIN_BASE_DIR }}" >> $GITHUB_ENV
           else
-            echo "Unknown branch: ${{ github.ref }}"
+            echo "Unknown branch: $GITHUB_REF"
             exit 1
           fi
 
       - name: Set up SSH
         run: |
-          eval $(ssh-agent -s)
-          chmod 400 "$PRIVATE_KEY"
-          mkdir -p ~/.ssh
-          chmod 700 ~/.ssh
-          ssh-add - <<< "$PRIVATE_KEY"
-          echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config
-          
+          echo "$PRIVATE_KEY" > ~/.ssh/private_key
+          chmod 400 ~/.ssh/private_key
+          ssh-add ~/.ssh/private_key
+
+
       - name: Install dependencies
         run: |
           sudo apt-get update
@@ -59,13 +57,13 @@ jobs:
 
       - name: Sync repo to host
         run: |
-          cat "$ENV_FILE" > .env
+          cp "$ENV_FILE" .env
           echo "CI_COMMIT_BRANCH=${GITHUB_REF##*/}" >> .env
           ssh -A -o StrictHostKeyChecking=no $USER_NAME@$SERVER_URL -p $SERVER_PORT "mkdir -p $BASE_DIR"
-          ssh -A -o StrictHostKeyChecking=no $USER_NAME@$SERVER_URL -p $SERVER_PORT "sudo apt-get update && sudo apt-get install rsync"
+          ssh -A -o StrictHostKeyChecking=no $USER_NAME@$SERVER_URL -p $SERVER_PORT "sudo apt-get update && sudo apt-get install -y rsync"
           rsync -zvrRth --progress --no-inc-recursive --exclude '.git' . $USER_NAME@$SERVER_URL:$BASE_DIR
 
-  deploy:
+deploy:
     runs-on: self-hosted
     environment: default_env
     needs: sync
@@ -76,12 +74,9 @@ jobs:
 
       - name: Launch containers
         run: |
-          ssh -A -o StrictHostKeyChecking=no $USER_NAME@$SERVER_URL -p $SERVER_PORT "cd $BASE_DIR/ && docker compose --env-file .env up --build -d"
-        
+          ssh -A -o StrictHostKeyChecking=no $USER_NAME@$SERVER_URL -p $SERVER_PORT "cd $BASE_DIR && docker compose --env-file .env up --build -d"
+
       - name: Docker system prune
+        if: ${{ !secrets.NOT_PRUNE_DOCKER }}
         run: |
-          if [ -z "${{ secrets.NOT_PRUNE_DOCKER }}" ]; then
-            ssh -A -o StrictHostKeyChecking=no $USER_NAME@$SERVER_URL -p $SERVER_PORT "docker system prune --all --force"
-          else
-            echo "Skip docker system prune"
-          fi
+          ssh -A -o StrictHostKeyChecking=no $USER_NAME@$SERVER_URL -p $SERVER_PORT "docker system prune --all --force"
