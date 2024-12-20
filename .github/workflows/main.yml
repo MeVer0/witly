@@ -47,10 +47,11 @@ jobs:
 
       - name: Set up SSH
         run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
           echo "$PRIVATE_KEY" > ~/.ssh/private_key
-          chmod 400 ~/.ssh/private_key
+          chmod 600 ~/.ssh/private_key
           ssh-add ~/.ssh/private_key
-
 
       - name: Install dependencies
         run: |
