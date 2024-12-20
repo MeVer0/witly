@@ -46,10 +46,10 @@ jobs:
       - name: Set up SSH
         run: |
           eval $(ssh-agent -s)
-          chmod 400 "${PRIVATE_KEY}"
+          chmod 400 "$PRIVATE_KEY"
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
-          ssh-add - <<< "${PRIVATE_KEY}"
+          ssh-add - <<< "$PRIVATE_KEY"
           echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config
           
       - name: Install dependencies
@@ -59,7 +59,7 @@ jobs:
 
       - name: Sync repo to host
         run: |
-          cat "${ENV_FILE}" > .env
+          cat "$ENV_FILE" > .env
           echo "CI_COMMIT_BRANCH=${GITHUB_REF##*/}" >> .env
           ssh -A -o StrictHostKeyChecking=no $USER_NAME@$SERVER_URL -p $SERVER_PORT "mkdir -p $BASE_DIR"
           ssh -A -o StrictHostKeyChecking=no $USER_NAME@$SERVER_URL -p $SERVER_PORT "sudo apt-get update && sudo apt-get install rsync"
