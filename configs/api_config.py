@@ -1,11 +1,12 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-class TgConfig(BaseSettings):
+class ApiConfig(BaseSettings):
     model_config = SettingsConfigDict(
         env_file_encoding='utf-8',
-        env_prefix='tg_',
+        env_prefix='api_',
         extra='ignore'
     )
 
-    bot_token: str
+    host: str = '127.0.0.1'
+    port: int = 8080
