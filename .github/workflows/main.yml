@@ -51,7 +51,9 @@ jobs:
           chmod 700 /tmp/ssh
           echo "$PRIVATE_KEY" > /tmp/ssh/private_key
           chmod 600 /tmp/ssh/private_key
+          eval "$(ssh-agent -s)"
           ssh-add /tmp/ssh/private_key
+
 
       - name: Install dependencies
         run: |
