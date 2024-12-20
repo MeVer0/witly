@@ -1,0 +1,61 @@
+name: Deploy to Server
+
+on:
+  push:
+    branches:
+      - dev
+      - main
+  pull_request:
+    branches:
+      - dev
+      - main
+
+env:
+  PIP_CACHE_DIR: "${{ github.workspace }}/.cache/pip"
+
+jobs:
+  sync:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.PRIVATE_KEY }}" | base64 -d | tr -d '\r' | ssh-add - > /dev/null
+          echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y git openssh-client rsync
+
+      - name: Sync repo to host
+        run: |
+          cat "${{ secrets.ENV_FILE }}" > .env
+          echo "CI_COMMIT_BRANCH=${GITHUB_REF##*/}" >> .env
+          ssh -A -o StrictHostKeyChecking=no ${{ secrets.USER_NAME }}@${{ secrets.SERVER_URL }} -p ${{ secrets.SERVER_PORT }} "mkdir -p ${{ secrets.BASE_DIR }}"
+          ssh -A -o StrictHostKeyChecking=no ${{ secrets.USER_NAME }}@${{ secrets.SERVER_URL }} -p ${{ secrets.SERVER_PORT }} "sudo apt-get update && sudo apt-get install rsync"
+          rsync -zvrRth --progress --no-inc-recursive --exclude '.git' . ${{ secrets.USER_NAME }}@${{ secrets.SERVER_URL }}:${{ secrets.BASE_DIR }}
+
+  deploy:
+    runs-on: self-hosted
+    needs: sync
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Launch containers
+        run: |
+          ssh -A -o StrictHostKeyChecking=no ${{ secrets.USER_NAME }}@${{ secrets.SERVER_URL }} -p ${{ secrets.SERVER_PORT }} "cd ${{ secrets.BASE_DIR }}/ && docker compose --env-file .env up --build -d"
+
+      - name: Docker system prune
+        run: |
+          if [ -z "${{ secrets.NOT_PRUNE_DOCKER }}" ]; then
+            ssh -A -o StrictHostKeyChecking=no ${{ secrets.USER_NAME }}@${{ secrets.SERVER_URL }} -p ${{ secrets.SERVER_PORT }} "docker system prune --all --force"
+          else
+            echo "Skip docker system prune"
+          fi
