@@ -15,7 +15,7 @@ env:
 
 jobs:
   sync:
-    runs-on: self-hosted  # Используется self-hosted runner
+    runs-on: self-hosted
 
     steps:
       - name: Checkout repository
@@ -44,7 +44,6 @@ jobs:
 
       - name: Set up SSH
         run: |
-          eval $(ssh-agent -s)  # Запускаем SSH-агент
           mkdir -p ~/.ssh
           echo "${PRIVATE_KEY}" | base64 -d | tr -d '\r' | ssh-add - > /dev/null
           echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config
@@ -64,7 +63,7 @@ jobs:
 
   deploy:
     runs-on: self-hosted  # Используется self-hosted runner
-    needs: sync  # Деплой зависит от синхронизации
+    needs: sync
 
     steps:
       - name: Checkout repository
