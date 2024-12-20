@@ -45,8 +45,7 @@ jobs:
 
       - name: Set up SSH
         run: |
-          mkdir -p ~/.ssh
-          echo "${PRIVATE_KEY}" | tr -d '\r' | ssh-add - > /dev/null
+          ssh-add - <<< "${PRIVATE_KEY}"
           echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config
           
       - name: Install dependencies
