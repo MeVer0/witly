@@ -63,20 +63,20 @@ jobs:
           ssh -A -o StrictHostKeyChecking=no $USER_NAME@$SERVER_URL -p $SERVER_PORT "sudo apt-get update && sudo apt-get install -y rsync"
           rsync -zvrRth --progress --no-inc-recursive --exclude '.git' . $USER_NAME@$SERVER_URL:$BASE_DIR
 
-deploy:
-    runs-on: self-hosted
-    environment: default_env
-    needs: sync
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
-
-      - name: Launch containers
-        run: |
-          ssh -A -o StrictHostKeyChecking=no $USER_NAME@$SERVER_URL -p $SERVER_PORT "cd $BASE_DIR && docker compose --env-file .env up --build -d"
-
-      - name: Docker system prune
-        if: ${{ !secrets.NOT_PRUNE_DOCKER }}
-        run: |
-          ssh -A -o StrictHostKeyChecking=no $USER_NAME@$SERVER_URL -p $SERVER_PORT "docker system prune --all --force"
+  deploy:
+      runs-on: self-hosted
+      environment: default_env
+      needs: sync
+  
+      steps:
+        - name: Checkout repository
+          uses: actions/checkout@v2
+  
+        - name: Launch containers
+          run: |
+            ssh -A -o StrictHostKeyChecking=no $USER_NAME@$SERVER_URL -p $SERVER_PORT "cd $BASE_DIR && docker compose --env-file .env up --build -d"
+  
+        - name: Docker system prune
+          if: ${{ !secrets.NOT_PRUNE_DOCKER }}
+          run: |
+            ssh -A -o StrictHostKeyChecking=no $USER_NAME@$SERVER_URL -p $SERVER_PORT "docker system prune --all --force"
