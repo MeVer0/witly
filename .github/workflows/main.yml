@@ -16,6 +16,7 @@ env:
 jobs:
   sync:
     runs-on: self-hosted
+    environment: default_env
 
     steps:
       - name: Checkout repository
@@ -62,7 +63,8 @@ jobs:
           rsync -zvrRth --progress --no-inc-recursive --exclude '.git' . $USER_NAME@$SERVER_URL:$BASE_DIR
 
   deploy:
-    runs-on: self-hosted  # Используется self-hosted runner
+    runs-on: self-hosted
+    environment: default_env
     needs: sync
 
     steps:
