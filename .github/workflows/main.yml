@@ -31,6 +31,7 @@ jobs:
             echo "SERVER_URL=${{ secrets.DEV_SERVER_URL }}" >> $GITHUB_ENV
             echo "SERVER_PORT=${{ secrets.DEV_SERVER_PORT }}" >> $GITHUB_ENV
             echo "BASE_DIR=${{ secrets.DEV_BASE_DIR }}" >> $GITHUB_ENV
+            echo "NOT_PRUNE_DOCKER=${{ secrets.NOT_PRUNE_DOCKER }}" >> $GITHUB_ENV
           elif [[ "${GITHUB_REF}" == "refs/heads/main" ]]; then
             echo "ENV_FILE=${{ secrets.MAIN_ENV_FILE }}" >> $GITHUB_ENV
             echo "PRIVATE_KEY=${{ secrets.MAIN_PRIVATE_KEY }}" >> $GITHUB_ENV
@@ -38,6 +39,7 @@ jobs:
             echo "SERVER_URL=${{ secrets.MAIN_SERVER_URL }}" >> $GITHUB_ENV
             echo "SERVER_PORT=${{ secrets.MAIN_SERVER_PORT }}" >> $GITHUB_ENV
             echo "BASE_DIR=${{ secrets.MAIN_BASE_DIR }}" >> $GITHUB_ENV
+            echo "NOT_PRUNE_DOCKER=${{ secrets.NOT_PRUNE_DOCKER }}" >> $GITHUB_ENV
           else
             echo "Unknown branch: $GITHUB_REF"
             exit 1
@@ -77,6 +79,6 @@ jobs:
             ssh -A -o StrictHostKeyChecking=no $USER_NAME@$SERVER_URL -p $SERVER_PORT "cd $BASE_DIR && docker compose --env-file .env up --build -d"
   
         - name: Docker system prune
-          if: ${{ !secrets.NOT_PRUNE_DOCKER }}
+          if: ${{ env.NOT_PRUNE_DOCKER != 'true' }}
           run: |
             ssh -A -o StrictHostKeyChecking=no $USER_NAME@$SERVER_URL -p $SERVER_PORT "docker system prune --all --force"
