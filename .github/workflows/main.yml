@@ -36,6 +36,14 @@ jobs:
           echo "$DEV_PRIVATE_KEY" > /tmp/private_key
           file /tmp/private_key
           cat /tmp/private_key | head -n 10
+        env:
+          DEV_PRIVATE_KEY: ${{ secrets.DEV_PRIVATE_KEY }}
+          DEV_ENV_FILE: ${{ secrets.DEV_ENV_FILE }}
+          DEV_BACK_USER_NAME: ${{ secrets.DEV_BACK_USER_NAME }}
+          DEV_BASE_DIR: ${{ secrets.DEV_BASE_DIR }}
+          DEV_SERVER_PORT: ${{ secrets.DEV_SERVER_PORT }}
+          DEV_SERVER_URL: ${{ secrets.DEV_SERVER_URL }}
+          NOT_PRUNE_DOCKER: ${{ secrets.NOT_PRUNE_DOCKER }}
           
       - name: Set up SSH
         run: |
