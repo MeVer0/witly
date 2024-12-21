@@ -26,9 +26,9 @@ jobs:
         run: |
           echo "$DEV_ENV_FILE" > .env
           echo "CI_COMMIT_BRANCH=${GITHUB_REF##*/}" >> .env
-          ssh -A -o StrictHostKeyChecking=no $USER_NAME@$SERVER_URL -p $SERVER_PORT "mkdir -p $BASE_DIR"
-          ssh -A -o StrictHostKeyChecking=no $USER_NAME@$SERVER_URL -p $SERVER_PORT "apt-get update && apt-get install -y rsync"
-          rsync -zvrRth --progress --no-inc-recursive --exclude '.git' . $USER_NAME@$SERVER_URL:$BASE_DIR
+          ssh -A -o StrictHostKeyChecking=no $DEV_USER_NAME@$DEV_SERVER_URL -p $DEV_SERVER_PORT "mkdir -p $DEV_BASE_DIR"
+          ssh -A -o StrictHostKeyChecking=no $DEV_USER_NAME@$DEV_SERVER_URL -p $DEV_SERVER_PORT "apt-get update && apt-get install -y rsync"
+          rsync -zvrRth --progress --no-inc-recursive --exclude '.git' . $DEV_USER_NAME@$SERVER_URL:$DEV_BASE_DIR
         env:
           DEV_ENV_FILE: ${{ secrets.DEV_ENV_FILE }}
           DEV_SERVER_PORT: ${{ secrets.DEV_SERVER_PORT }}
