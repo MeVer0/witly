@@ -21,22 +21,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
-          
-      - name: Set up SSH
-        run: |
-          mkdir -p /tmp/ssh
-          chmod 700 /tmp/ssh
-          echo "$DEV_PRIVATE_KEY" > /tmp/ssh/private_key
-          chmod 600 /tmp/ssh/private_key
-          eval "$(ssh-agent -s)"
-          ssh-add /tmp/ssh/private_key
-        env:
-          DEV_PRIVATE_KEY: ${{ secrets.DEV_PRIVATE_KEY }}
-
-      - name: Install dependencies
-        run: |
-          apt-get update
-          apt-get install -y git openssh-client rsync
 
       - name: Sync repo to host
         run: |
