@@ -24,7 +24,7 @@ jobs:
 
       - name: Sync repo to host
         run: |
-          cp "$DEV_ENV_FILE" .env
+          echo "$DEV_ENV_FILE" > .env
           echo "CI_COMMIT_BRANCH=${GITHUB_REF##*/}" >> .env
           ssh -A -o StrictHostKeyChecking=no $USER_NAME@$SERVER_URL -p $SERVER_PORT "mkdir -p $BASE_DIR"
           ssh -A -o StrictHostKeyChecking=no $USER_NAME@$SERVER_URL -p $SERVER_PORT "apt-get update && apt-get install -y rsync"
