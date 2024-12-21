@@ -35,15 +35,15 @@ jobs:
 
       - name: Install dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y git openssh-client rsync
+          apt-get update
+          apt-get install -y git openssh-client rsync
 
       - name: Sync repo to host
         run: |
           cp "$DEV_ENV_FILE" .env
           echo "CI_COMMIT_BRANCH=${GITHUB_REF##*/}" >> .env
           ssh -A -o StrictHostKeyChecking=no $USER_NAME@$SERVER_URL -p $SERVER_PORT "mkdir -p $BASE_DIR"
-          ssh -A -o StrictHostKeyChecking=no $USER_NAME@$SERVER_URL -p $SERVER_PORT "sudo apt-get update && sudo apt-get install -y rsync"
+          ssh -A -o StrictHostKeyChecking=no $USER_NAME@$SERVER_URL -p $SERVER_PORT "apt-get update && apt-get install -y rsync"
           rsync -zvrRth --progress --no-inc-recursive --exclude '.git' . $USER_NAME@$SERVER_URL:$BASE_DIR
         env:
           DEV_ENV_FILE: ${{ secrets.DEV_ENV_FILE }}
