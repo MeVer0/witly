@@ -29,7 +29,13 @@ jobs:
           DEV_SERVER_PORT: ${{ secrets.DEV_SERVER_PORT }}
           DEV_SERVER_URL: ${{ secrets.DEV_SERVER_URL }}
           NOT_PRUNE_DOCKER: ${{ secrets.NOT_PRUNE_DOCKER }}
-
+          
+      - name: Debug private key
+        run: |
+          echo "$DEV_PRIVATE_KEY" > /tmp/private_key
+          file /tmp/private_key
+          cat /tmp/private_key | head -n 10
+          
       - name: Set up SSH
         run: |
           echo "$DEV_PRIVATE_KEY"
