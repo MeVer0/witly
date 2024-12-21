@@ -32,6 +32,7 @@ jobs:
 
       - name: Set up SSH
         run: |
+          echo "$DEV_PRIVATE_KEY"
           mkdir -p /tmp/ssh
           chmod 700 /tmp/ssh
           echo "$DEV_PRIVATE_KEY" > /tmp/ssh/private_key
