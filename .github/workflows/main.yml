@@ -21,40 +21,17 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
-        env:
-          DEV_ENV_FILE: ${{ secrets.DEV_ENV_FILE }}
-          DEV_PRIVATE_KEY: ${{ secrets.DEV_PRIVATE_KEY }}
-          DEV_BACK_USER_NAME: ${{ secrets.DEV_BACK_USER_NAME }}
-          DEV_BASE_DIR: ${{ secrets.DEV_BASE_DIR }}
-          DEV_SERVER_PORT: ${{ secrets.DEV_SERVER_PORT }}
-          DEV_SERVER_URL: ${{ secrets.DEV_SERVER_URL }}
-          NOT_PRUNE_DOCKER: ${{ secrets.NOT_PRUNE_DOCKER }}
-          
-      - name: Debug private key
-        run: |
-          echo "Private Key Length: ${#DEV_PRIVATE_KEY}"
-          echo "$DEV_PRIVATE_KEY" > /tmp/private_key
-          file /tmp/private_key
-          cat /tmp/private_key | head -n 10
-        env:
-          DEV_PRIVATE_KEY: ${{ secrets.DEV_PRIVATE_KEY }}
-          DEV_ENV_FILE: ${{ secrets.DEV_ENV_FILE }}
-          DEV_BACK_USER_NAME: ${{ secrets.DEV_BACK_USER_NAME }}
-          DEV_BASE_DIR: ${{ secrets.DEV_BASE_DIR }}
-          DEV_SERVER_PORT: ${{ secrets.DEV_SERVER_PORT }}
-          DEV_SERVER_URL: ${{ secrets.DEV_SERVER_URL }}
-          NOT_PRUNE_DOCKER: ${{ secrets.NOT_PRUNE_DOCKER }}
           
       - name: Set up SSH
         run: |
-          echo "$DEV_PRIVATE_KEY"
           mkdir -p /tmp/ssh
           chmod 700 /tmp/ssh
           echo "$DEV_PRIVATE_KEY" > /tmp/ssh/private_key
           chmod 600 /tmp/ssh/private_key
           eval "$(ssh-agent -s)"
           ssh-add /tmp/ssh/private_key
-
+        env:
+          DEV_PRIVATE_KEY: ${{ secrets.DEV_PRIVATE_KEY }}
 
       - name: Install dependencies
         run: |
@@ -63,11 +40,18 @@ jobs:
 
       - name: Sync repo to host
         run: |
-          cp "$ENV_FILE" .env
+          cp "$DEV_ENV_FILE" .env
           echo "CI_COMMIT_BRANCH=${GITHUB_REF##*/}" >> .env
           ssh -A -o StrictHostKeyChecking=no $USER_NAME@$SERVER_URL -p $SERVER_PORT "mkdir -p $BASE_DIR"
           ssh -A -o StrictHostKeyChecking=no $USER_NAME@$SERVER_URL -p $SERVER_PORT "sudo apt-get update && sudo apt-get install -y rsync"
           rsync -zvrRth --progress --no-inc-recursive --exclude '.git' . $USER_NAME@$SERVER_URL:$BASE_DIR
+        env:
+          DEV_ENV_FILE: ${{ secrets.DEV_ENV_FILE }}
+          DEV_SERVER_PORT: ${{ secrets.DEV_SERVER_PORT }}
+          DEV_SERVER_URL: ${{ secrets.DEV_SERVER_URL }}
+          DEV_BASE_DIR: ${{ secrets.DEV_BASE_DIR }}
+
+          
 
   deploy:
       runs-on: self-hosted
@@ -86,3 +70,5 @@ jobs:
           if: ${{ env.NOT_PRUNE_DOCKER != 'true' }}
           run: |
             ssh -A -o StrictHostKeyChecking=no $USER_NAME@$SERVER_URL -p $SERVER_PORT "docker system prune --all --force"
+          env:
+            NOT_PRUNE_DOCKER: ${{ secrets.NOT_PRUNE_DOCKER }}
