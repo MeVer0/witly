@@ -22,13 +22,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
         env:
-          DEV_ENV_FILE: ${{ secret.DEV_ENV_FILE }}
-          DEV_PRIVATE_KEY: ${{ secret.DEV_PRIVATE_KEY }}
-          DEV_BACK_USER_NAME: ${{ secret.DEV_BACK_USER_NAME }}
-          DEV_BASE_DIR: ${{ secret.DEV_BASE_DIR }}
-          DEV_SERVER_PORT: ${{ secret.DEV_SERVER_PORT }}
-          DEV_SERVER_URL: ${{ secret.DEV_SERVER_URL }}
-          NOT_PRUNE_DOCKER: ${{ secret.NOT_PRUNE_DOCKER }}
+          DEV_ENV_FILE: ${{ secrets.DEV_ENV_FILE }}
+          DEV_PRIVATE_KEY: ${{ secrets.DEV_PRIVATE_KEY }}
+          DEV_BACK_USER_NAME: ${{ secrets.DEV_BACK_USER_NAME }}
+          DEV_BASE_DIR: ${{ secrets.DEV_BASE_DIR }}
+          DEV_SERVER_PORT: ${{ secrets.DEV_SERVER_PORT }}
+          DEV_SERVER_URL: ${{ secrets.DEV_SERVER_URL }}
+          NOT_PRUNE_DOCKER: ${{ secrets.NOT_PRUNE_DOCKER }}
 
       - name: Set up SSH
         run: |
