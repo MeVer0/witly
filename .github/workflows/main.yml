@@ -34,7 +34,7 @@ jobs:
           DEV_SERVER_PORT: ${{ secrets.DEV_SERVER_PORT }}
           DEV_SERVER_URL: ${{ secrets.DEV_SERVER_URL }}
           DEV_BASE_DIR: ${{ secrets.DEV_BASE_DIR }}
-
+          DEV_USER_NAME: ${{ secrets.DEV_USER_NAME }}
           
 
   deploy:
