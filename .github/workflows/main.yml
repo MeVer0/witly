@@ -21,35 +21,20 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
-
-      - name: Set environment variables
-        run: |
-          if [[ "${GITHUB_REF}" == "refs/heads/dev" ]]; then
-            echo "ENV_FILE=${{ secrets.DEV_ENV_FILE }}" >> $GITHUB_ENV
-            echo "PRIVATE_KEY=${{ secrets.DEV_PRIVATE_KEY }}" >> $GITHUB_ENV
-            echo "USER_NAME=${{ secrets.DEV_BACK_USER_NAME }}" >> $GITHUB_ENV
-            echo "SERVER_URL=${{ secrets.DEV_SERVER_URL }}" >> $GITHUB_ENV
-            echo "SERVER_PORT=${{ secrets.DEV_SERVER_PORT }}" >> $GITHUB_ENV
-            echo "BASE_DIR=${{ secrets.DEV_BASE_DIR }}" >> $GITHUB_ENV
-            echo "NOT_PRUNE_DOCKER=${{ secrets.NOT_PRUNE_DOCKER }}" >> $GITHUB_ENV
-          elif [[ "${GITHUB_REF}" == "refs/heads/main" ]]; then
-            echo "ENV_FILE=${{ secrets.MAIN_ENV_FILE }}" >> $GITHUB_ENV
-            echo "PRIVATE_KEY=${{ secrets.MAIN_PRIVATE_KEY }}" >> $GITHUB_ENV
-            echo "USER_NAME=${{ secrets.MAIN_BACK_USER_NAME }}" >> $GITHUB_ENV
-            echo "SERVER_URL=${{ secrets.MAIN_SERVER_URL }}" >> $GITHUB_ENV
-            echo "SERVER_PORT=${{ secrets.MAIN_SERVER_PORT }}" >> $GITHUB_ENV
-            echo "BASE_DIR=${{ secrets.MAIN_BASE_DIR }}" >> $GITHUB_ENV
-            echo "NOT_PRUNE_DOCKER=${{ secrets.NOT_PRUNE_DOCKER }}" >> $GITHUB_ENV
-          else
-            echo "Unknown branch: $GITHUB_REF"
-            exit 1
-          fi
+        env:
+          DEV_ENV_FILE: ${{ secret.DEV_ENV_FILE }}
+          DEV_PRIVATE_KEY: ${{ secret.DEV_PRIVATE_KEY }}
+          DEV_BACK_USER_NAME: ${{ secret.DEV_BACK_USER_NAME }}
+          DEV_BASE_DIR: ${{ secret.DEV_BASE_DIR }}
+          DEV_SERVER_PORT: ${{ secret.DEV_SERVER_PORT }}
+          DEV_SERVER_URL: ${{ secret.DEV_SERVER_URL }}
+          NOT_PRUNE_DOCKER: ${{ secret.NOT_PRUNE_DOCKER }}
 
       - name: Set up SSH
         run: |
           mkdir -p /tmp/ssh
           chmod 700 /tmp/ssh
-          echo "$PRIVATE_KEY" > /tmp/ssh/private_key
+          echo "$DEV_PRIVATE_KEY" > /tmp/ssh/private_key
           chmod 600 /tmp/ssh/private_key
           eval "$(ssh-agent -s)"
           ssh-add /tmp/ssh/private_key
