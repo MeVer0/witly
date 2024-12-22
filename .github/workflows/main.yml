@@ -38,7 +38,6 @@ jobs:
           echo "$DEV_ENV_FILE" > .env
           echo "CI_COMMIT_BRANCH=${GITHUB_REF##*/}" >> .env
           ssh -o StrictHostKeyChecking=no $DEV_USER_NAME@$DEV_SERVER_URL -p $DEV_SERVER_PORT "mkdir -p $DEV_BASE_DIR"
-          ssh -o StrictHostKeyChecking=no $DEV_USER_NAME@$DEV_SERVER_URL -p $DEV_SERVER_PORT "apt-get update && apt-get install -y rsync"
           rsync -zvrRth --progress --no-inc-recursive --exclude '.git' . $DEV_USER_NAME@$DEV_SERVER_URL:$DEV_BASE_DIR
         env:
           DEV_ENV_FILE: ${{ secrets.DEV_ENV_FILE }}
