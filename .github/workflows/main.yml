@@ -15,7 +15,8 @@ env:
 
 jobs:
   sync:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
+    environment: default_env
 
     steps:
       - name: Checkout repository
