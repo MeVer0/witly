@@ -22,37 +22,43 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
+      - name: Install sshpass
+        run: sudo apt-get install -y sshpass
+
       - name: Sync repo to host
         run: |
           echo "$DEV_ENV_FILE" > .env
           echo "CI_COMMIT_BRANCH=${GITHUB_REF##*/}" >> .env
-          ssh -A -o StrictHostKeyChecking=no $DEV_USER_NAME@$DEV_SERVER_URL -p $DEV_SERVER_PORT "mkdir -p $DEV_BASE_DIR"
-          ssh -A -o StrictHostKeyChecking=no $DEV_USER_NAME@$DEV_SERVER_URL -p $DEV_SERVER_PORT "apt-get update && apt-get install -y rsync"
-          rsync -zvrRth --progress --no-inc-recursive --exclude '.git' . $DEV_USER_NAME@$SERVER_URL:$DEV_BASE_DIR
+          sshpass -p "${{ secrets.DEV_SERVER_PASSWORD }}" ssh -o StrictHostKeyChecking=no $DEV_USER_NAME@$DEV_SERVER_URL -p $DEV_SERVER_PORT "mkdir -p $DEV_BASE_DIR"
+          sshpass -p "${{ secrets.DEV_SERVER_PASSWORD }}" ssh -o StrictHostKeyChecking=no $DEV_USER_NAME@$DEV_SERVER_URL -p $DEV_SERVER_PORT "apt-get update && apt-get install -y rsync"
+          # Используем rsync для синхронизации кода на сервере
+          rsync -zvrRth --progress --no-inc-recursive --exclude '.git' . $DEV_USER_NAME@$DEV_SERVER_URL:$DEV_BASE_DIR
         env:
           DEV_ENV_FILE: ${{ secrets.DEV_ENV_FILE }}
           DEV_SERVER_PORT: ${{ secrets.DEV_SERVER_PORT }}
           DEV_SERVER_URL: ${{ secrets.DEV_SERVER_URL }}
           DEV_BASE_DIR: ${{ secrets.DEV_BASE_DIR }}
           DEV_USER_NAME: ${{ secrets.DEV_USER_NAME }}
-          
+          DEV_SERVER_PASSWORD: ${{ secrets.DEV_SERVER_PASSWORD }}
 
   deploy:
-      runs-on: self-hosted
-      environment: default_env
-      needs: sync
-  
-      steps:
-        - name: Checkout repository
-          uses: actions/checkout@v2
-  
-        - name: Launch containers
-          run: |
-            ssh -A -o StrictHostKeyChecking=no $USER_NAME@$SERVER_URL -p $SERVER_PORT "cd $BASE_DIR && docker compose --env-file .env up --build -d"
-  
-        - name: Docker system prune
-          if: ${{ env.NOT_PRUNE_DOCKER != 'true' }}
-          run: |
-            ssh -A -o StrictHostKeyChecking=no $USER_NAME@$SERVER_URL -p $SERVER_PORT "docker system prune --all --force"
-          env:
-            NOT_PRUNE_DOCKER: ${{ secrets.NOT_PRUNE_DOCKER }}
+    runs-on: self-hosted
+    environment: default_env
+    needs: sync
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Launch containers
+        run: |
+          # Используем sshpass для подключения по SSH с паролем
+          sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh -o StrictHostKeyChecking=no $USER_NAME@$SERVER_URL -p $SERVER_PORT "cd $BASE_DIR && docker compose --env-file .env up --build -d"
+
+      - name: Docker system prune
+        if: ${{ env.NOT_PRUNE_DOCKER != 'true' }}
+        run: |
+          # Используем sshpass для очистки системы Docker
+          sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh -o StrictHostKeyChecking=no $USER_NAME@$SERVER_URL -p $SERVER_PORT "docker system prune --all --force"
+        env:
+          NOT_PRUNE_DOCKER: ${{ secrets.NOT_PRUNE_DOCKER }}
