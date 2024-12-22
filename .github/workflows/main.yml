@@ -21,18 +21,15 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
-
-      - name: Print DEV_SERVER_URL
-        run: echo "$DEV_SERVER_URL"
-        env:
-          DEV_SERVER_URL: ${{ secrets.DEV_SERVER_URL }}
           
       - name: Set up SSH
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.DEV_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 700 ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H $DEV_SERVER_URL >> ~/.ssh/known_hosts
+          ssh-keyscan -H ${{ secrets.DEV_SERVER_URL }} >> ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
         env:
           DEV_SERVER_URL: ${{ secrets.DEV_SERVER_URL }}
 
