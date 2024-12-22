@@ -30,7 +30,7 @@ jobs:
           echo "$DEV_ENV_FILE" > .env
           echo "CI_COMMIT_BRANCH=${GITHUB_REF##*/}" >> .env
           sshpass -p "${{ secrets.DEV_SERVER_PASSWORD }}" ssh -o StrictHostKeyChecking=no $DEV_USER_NAME@$DEV_SERVER_URL -p $DEV_SERVER_PORT "mkdir -p $DEV_BASE_DIR"
-          sshpass -p "${{ secrets.DEV_SERVER_PASSWORD }}" ssh -o StrictHostKeyChecking=no $DEV_USER_NAME@$DEV_SERVER_URL -p $DEV_SERVER_PORT "sudo apt-get update && sudo apt-get install -y rsync"
+          sshpass -p "${{ secrets.DEV_SERVER_PASSWORD }}" ssh -o StrictHostKeyChecking=no $DEV_USER_NAME@$DEV_SERVER_URL -p $DEV_SERVER_PORT "apt-get update && apt-get install -y rsync"
           rsync -zvrRth --progress --no-inc-recursive --exclude '.git' . $DEV_USER_NAME@$DEV_SERVER_URL:$DEV_BASE_DIR
         env:
           DEV_ENV_FILE: ${{ secrets.DEV_ENV_FILE }}
