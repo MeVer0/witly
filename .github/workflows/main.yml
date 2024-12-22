@@ -58,7 +58,7 @@ jobs:
 
       - name: Launch containers
         run: |
-          sshpass -p $DEV_SERVER_PASSWORD ssh -o StrictHostKeyChecking=no $DEV_USER_NAME@$DEV_SERVER_URL -p $DEV_SERVER_PORT "cd $DEV_BASE_DIR && docker compose --env-file .env up --build -d"
+          sshpass -p $DEV_SERVER_PASSWORD ssh -o StrictHostKeyChecking=no $DEV_USER_NAME@$DEV_SERVER_URL -p $DEV_SERVER_PORT "cd $DEV_BASE_DIR && docker compose --file docker-compose.yml --env-file .env up --build -d"
         env:
           DEV_BASE_DIR: ${{ secrets.DEV_BASE_DIR }}
           DEV_SERVER_PORT: ${{ secrets.DEV_SERVER_PORT }}
