@@ -21,6 +21,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
+      - name: Print DEV_SERVER_URL
+        run: echo "$DEV_SERVER_URL"
+        env:
+          DEV_SERVER_URL: ${{ secrets.DEV_SERVER_URL }}
+          
       - name: Set up SSH
         run: |
           mkdir -p ~/.ssh
